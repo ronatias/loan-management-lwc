@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningMessageChannel xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>LoanMessageChannel</masterLabel>
+    <isExposed>true</isExposed>
+    <description>Message channel for loan data</description>
+
+    <lightningMessageFields>
+        <fieldName>customerName</fieldName>
+        <description>Name of the customer</description>
+    </lightningMessageFields>
+
+    <lightningMessageFields>
+        <fieldName>loanAmount</fieldName>
+        <description>Amount of the loan</description>
+    </lightningMessageFields>
+
+    <lightningMessageFields>
+        <fieldName>loanStatus</fieldName>
+        <description>Status of the loan</description>
+    </lightningMessageFields>
+</LightningMessageChannel>

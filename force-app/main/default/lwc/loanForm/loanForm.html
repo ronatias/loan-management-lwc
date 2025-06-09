@@ -1,0 +1,44 @@
+<template>
+    <lightning-card title="Loan Form">
+        <div class="slds-p-around_medium">
+            <lightning-input 
+                class="form-field" 
+                label="Customer Name" 
+                name="customerName" 
+                value={customerName} 
+                onchange={handleInputChange}>
+            </lightning-input>
+
+            <lightning-input 
+                class="form-field" 
+                type="number" 
+                label="Loan Amount" 
+                name="loanAmount" 
+                value={loanAmount} 
+                onchange={handleInputChange}>
+            </lightning-input>
+
+            <lightning-combobox 
+                class="form-field" 
+                label="Loan Status" 
+                name="loanStatus" 
+                value={loanStatus} 
+                options={loanStatusOptions} 
+                onchange={handleInputChange} 
+                disabled={isStatusDisabled}>
+            </lightning-combobox>
+
+            <div class="button-container">
+                <lightning-button 
+                    variant="brand" 
+                    label="Save" 
+                    onclick={handleSave}>
+                </lightning-button>
+            </div>
+
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Saving..." size="small"></lightning-spinner>
+            </template>
+        </div>
+    </lightning-card>
+</template>

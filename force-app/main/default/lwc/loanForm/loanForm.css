@@ -1,0 +1,15 @@
+.form-field {
+    margin-bottom: 1.5rem;
+}
+
+.form-field lightning-input,
+.form-field lightning-combobox {
+    margin-top: 4px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+

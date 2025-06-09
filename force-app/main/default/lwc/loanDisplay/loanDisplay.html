@@ -1,0 +1,29 @@
+<template>
+    <lightning-card title="Submitted Loan Requests">
+        <div class="slds-p-around_medium">
+            <template if:true={loans}>
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                    <thead>
+                        <tr class="slds-line-height_reset">
+                            <th scope="col"><div class="slds-truncate" title="Customer Name">Customer Name</div></th>
+                            <th scope="col"><div class="slds-truncate" title="Loan Amount">Loan Amount</div></th>
+                            <th scope="col"><div class="slds-truncate" title="Loan Status">Loan Status</div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={loans} for:item="loan">
+                            <tr key={loan.Id}>
+                                <td><div class="slds-truncate" title={loan.Customer__r.Name}>{loan.Customer__r.Name}</div></td>
+                                <td><div class="slds-truncate" title={loan.LoanAmount__c}>{loan.LoanAmount__c}</div></td>
+                                <td><div class="slds-truncate" title={loan.LoanStatus__c}>{loan.LoanStatus__c}</div></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </template>
+            <template if:false={loans}>
+                <p class="slds-text-color_weak">No loan requests found.</p>
+            </template>
+        </div>
+    </lightning-card>
+</template>
