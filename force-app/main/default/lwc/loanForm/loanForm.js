@@ -9,7 +9,6 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 export default class LoanForm extends LightningElement {
     @track customerName = '';
     @track loanAmount = null;
-    @track loanStatus = '';
     @track isLoading = false;
     @track message = '';
     @track isStatusDisabled = false;
@@ -21,18 +20,20 @@ export default class LoanForm extends LightningElement {
         { label: 'Declined', value: 'Declined' }
     ];
 
+    //for LMS 
     @wire(MessageContext)
     messageContext;
 
+    //handler for lightning-input (customerName, loanAmount)
     handleInputChange(event) {
         const { name, value } = event.target;
-        this[name] = value;
-
+        this[name] = value; //set value according field name
+        //
         if (name === 'loanAmount') {
             const amount = parseFloat(value);
             if (!isNaN(amount) && amount > 250000) {
                 this.loanStatus = 'Pending';
-                this.isStatusDisabled = true;
+                this.isStatusDisabled = true; //Block the user to change the status, loan request needs to be approved by manager.
             } else {
                 this.isStatusDisabled = false;
             }
@@ -40,10 +41,11 @@ export default class LoanForm extends LightningElement {
     }
 
     handleSave() {
-        this.isLoading = true;
+        this.isLoading = true; //trigger spinner
         this.message = '';
 
         const amount = parseFloat(this.loanAmount);
+        //Validation to loanAmount value
         if (isNaN(amount) || amount <= 0) {
             this.dispatchEvent(
                 new ShowToastEvent({
@@ -52,11 +54,11 @@ export default class LoanForm extends LightningElement {
                     variant: 'error'
                 })
             );
-            this.isLoading = false;
+            this.isLoading = false; //close spinner
             return;
         }
 
-        getAccountIdByName({ accountName: this.customerName })
+        getAccountIdByName({ accountName: this.customerName }) //Check if account name is valid if yes trigger createLoanRequest
             .then(accountId => {
                 return createLoanRequest({
                     customerId: accountId,
@@ -65,6 +67,7 @@ export default class LoanForm extends LightningElement {
                 });
             })
             .then(result => {
+                //reset values + Success toast
                 this.customerName = '';
                 this.loanAmount = null;
                 this.loanStatus = '';
@@ -77,7 +80,7 @@ export default class LoanForm extends LightningElement {
                         variant: 'success'
                     })
                 );
-
+                //send message using channel LoanMessageChannel__c to expose loanRequest values (no common parent)
                 publish(this.messageContext, LOAN_MESSAGE_CHANNEL, {
                     loan: {
                         Id: result.Id,
@@ -89,7 +92,7 @@ export default class LoanForm extends LightningElement {
                 
             })
             .catch(error => {
-                // ❌ Show error toast
+                // Loan creation fail toast
                 this.dispatchEvent(
                     new ShowToastEvent({
                         title: 'Error creating loan',
@@ -100,89 +103,7 @@ export default class LoanForm extends LightningElement {
                 console.error(error);
             })
             .finally(() => {
-                this.isLoading = false;
+                this.isLoading = false; //end spinner handleSave
             });
     }
 }
-
-/* working version
-import { LightningElement, track, wire } from 'lwc';
-import getAccountIdByName from '@salesforce/apex/LoanRequestController.getAccountIdByName';
-import createLoanRequest from '@salesforce/apex/LoanRequestController.createLoanRequest';
-import { publish, MessageContext } from 'lightning/messageService';
-import LOAN_MESSAGE_CHANNEL from '@salesforce/messageChannel/LoanMessageChannel__c';
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-
-
-export default class LoanForm extends LightningElement {
-    @track customerName = '';
-    @track loanAmount = null;
-    @track loanStatus = '';
-    @track isLoading = false;
-    @track message = '';
-    @track isStatusDisabled = false;
-
-    @track loanStatusOptions = [
-        { label: 'Pending', value: 'Pending' },
-        { label: 'Approved', value: 'Approved' },
-        { label: 'Declined', value: 'Declined' }
-    ];
-
-    @wire(MessageContext)
-    messageContext;
-
-    handleInputChange(event) {
-        const { name, value } = event.target;
-        this[name] = value;
-
-        if (name === 'loanAmount') {
-            const amount = parseFloat(value);
-            if (!isNaN(amount) && amount > 250000) {
-                this.loanStatus = 'Pending';
-                this.isStatusDisabled = true;
-            } else {
-                this.isStatusDisabled = false;
-            }
-        }
-    }
-
-    handleSave() {
-        this.isLoading = true;
-        this.message = '';
-
-        getAccountIdByName({ accountName: this.customerName })
-            .then(accountId => {
-                return createLoanRequest({
-                    customerId: accountId,
-                    loanAmount: parseFloat(this.loanAmount),
-                    loanStatus: this.loanStatus
-                });
-            })
-            .then(result => {
-                this.customerName = '';
-                this.loanAmount = null;
-                this.loanStatus = '';
-                this.isStatusDisabled = false;
-
-                this.message = 'Loan created with Id: ' + result.Id + ', Status: ' + result.LoanStatus__c;
-
-                publish(this.messageContext, LOAN_MESSAGE_CHANNEL, {
-                    loan: {
-                        Id: result.Id,
-                        Customer__r: { Name: result.Customer__r.Name },
-                        LoanAmount__c: result.LoanAmount__c,
-                        LoanStatus__c: result.LoanStatus__c
-                    }
-                });
-                
-            })
-            .catch(error => {
-                this.message = 'Error: ' + (error.body?.message || error.message);
-                console.error(error);
-            })
-            .finally(() => {
-                this.isLoading = false;
-            });
-    }
-}
-    */

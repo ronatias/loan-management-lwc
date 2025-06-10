@@ -1,6 +1,11 @@
 <template>
     <lightning-card title="Submitted Loan Requests">
         <div class="slds-p-around_medium">
+            <template if:true={isLoading}>
+                <div class="slds-is-relative" style="min-height: 3rem;">
+                    <lightning-spinner size="small" alternative-text="Loading loans..." class="slds-align_absolute-center"></lightning-spinner>
+                </div>
+            </template>
             <template if:true={loans}>
                 <table class="slds-table slds-table_cell-buffer slds-table_bordered">
                     <thead>
