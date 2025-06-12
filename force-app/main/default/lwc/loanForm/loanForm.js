@@ -57,8 +57,8 @@ export default class LoanForm extends LightningElement {
             this.isLoading = false; //close spinner
             return;
         }
-
-        getAccountIdByName({ accountName: this.customerName }) //Check if account name is valid if yes trigger createLoanRequest
+        
+        getAccountIdByName({ customerName: this.customerName }) //Check if account name is valid if yes trigger createLoanRequest
             .then(accountId => {
                 return createLoanRequest({
                     customerId: accountId,

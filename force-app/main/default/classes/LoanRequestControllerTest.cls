@@ -1,81 +1,84 @@
 @isTest
 public class LoanRequestControllerTest {
 
-    // Set up test data once for all tests: an account and a loan history
+    // Set up shared test data once — runs before all test methods
     @testSetup
     static void setupTestData() {
-        Account acc = new Account(Name = 'Test Account');
-        insert acc;
+        // Create a test customer record
+        Customer__c customer = new Customer__c(Name = 'Test Customer');
+        insert customer;
 
-        LoanHistory__c history1 = new LoanHistory__c(
-            Customer__c = acc.Id,
+        // Create a loan history record
+        LoanHistory__c history = new LoanHistory__c(
+            Customer__c = customer.Id,
             LoanAmount__c = 100000,
             LoanStatus__c = 'Approved',
             LoanDate__c = Date.today()
         );
-        insert history1;
+        insert history;
     }
 
-    // This test checks if we can create a loan request for a real account,
-    // and verifies that the data saved is correct
+    // Test method to verify successful loan creation
     @isTest
     static void testCreateLoanRequest() {
-        Account acc = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
+        // Query test customer created in @testSetup
+        Customer__c customer = [SELECT Id FROM Customer__c WHERE Name = 'Test Customer' LIMIT 1];
 
+        // Call the controller method and validate the created record
         Test.startTest();
         LoanRequest__c result = LoanRequestController.createLoanRequest(
-            acc.Id,
+            customer.Id,
             150000,
             'Approved'
         );
         Test.stopTest();
 
-        System.assertNotEquals(null, result, 'Loan was not created');
-        System.assertEquals(acc.Id, result.Customer__c, 'Customer not matched');
-        System.assertEquals(150000, result.LoanAmount__c, 'Amount not matched');
+        // Assert the loan was created with correct details
+        System.assertNotEquals(null, result, 'Loan should have been created');
+        System.assertEquals(customer.Id, result.Customer__c, 'Customer ID mismatch');
+        System.assertEquals(150000, result.LoanAmount__c, 'Loan amount mismatch');
     }
 
-    // This test verifies that getAccountIdByName works correctly
-    // when given a real, existing account name
+    // Test method to verify getAccountIdByName returns the correct ID
     @isTest
     static void testGetAccountIdByName_Found() {
         Test.startTest();
-        Id accId = LoanRequestController.getAccountIdByName('Test Account');
+        Id customerId = LoanRequestController.getAccountIdByName('Test Customer');
         Test.stopTest();
 
-        System.assertNotEquals(null, accId, 'Account ID should have been returned');
+        System.assertNotEquals(null, customerId, 'Expected to get Customer ID');
     }
 
-    // This test makes sure that if you search for an account name that doesn't exist,
-    // the method throws a handled exception instead of crashing
+    // Test method to verify exception is thrown if customer name not found
     @isTest
     static void testGetAccountIdByName_NotFound() {
-        Test.startTest();
-        Boolean isAuraHandledException = false;
+        Boolean caughtException = false;
 
+        Test.startTest();
         try {
-            LoanRequestController.getAccountIdByName('DefinitelyDoesNotExist_' + System.currentTimeMillis());
+            LoanRequestController.getAccountIdByName('NonExistentCustomer_' + System.currentTimeMillis());
         } catch (Exception e) {
+            // Check that the exception is a handled AuraHandledException
             if (e instanceof AuraHandledException) {
-                isAuraHandledException = true;
+                caughtException = true;
             }
         }
-
         Test.stopTest();
-        System.assert(isAuraHandledException, 'Expected AuraHandledException was thrown');
+
+        System.assert(caughtException, 'Expected AuraHandledException for unknown customer name');
     }
 
-    // This test creates a loan and then checks that getAllLoanRequests
-    // returns that loan as part of the results
+    // Test that getAllLoanRequests returns recent loan records correctly
     @isTest
     static void testGetAllLoanRequests() {
-        Account acc = new Account(Name = 'Test Account');
-        insert acc;
+        // Create another customer and loan record
+        Customer__c customer = new Customer__c(Name = 'Another Customer');
+        insert customer;
 
         LoanRequest__c loan = new LoanRequest__c(
-            Customer__c = acc.Id,
-            LoanAmount__c = 12345,
-            LoanStatus__c = 'Approved',
+            Customer__c = customer.Id,
+            LoanAmount__c = 25000,
+            LoanStatus__c = 'Pending',
             LoanDate__c = Date.today()
         );
         insert loan;
@@ -84,7 +87,32 @@ public class LoanRequestControllerTest {
         List<LoanRequest__c> results = LoanRequestController.getAllLoanRequests();
         Test.stopTest();
 
-        System.assertNotEquals(0, results.size(), 'Expected loan results');
-        System.assertEquals(loan.Id, results[0].Id, 'Expected matching loan record');
+        // Assert that at least one result exists and contains the expected record
+        System.assert(!results.isEmpty(), 'Loan list should not be empty');
+        System.assertEquals(loan.Id, results[0].Id, 'Expected latest loan to match');
     }
+
+    @isTest
+    static void testCreateLoanRequest_Exception() {
+    Boolean didThrow = false;
+
+    // Use invalid customerId to cause a failure
+    String invalidCustomerId = '001000000000000'; // Not a real Customer__c Id
+
+    Test.startTest();
+    try {
+        LoanRequestController.createLoanRequest(
+            invalidCustomerId, // wrong object prefix
+            100000,
+            'Approved'
+        );
+    } catch (Exception e) {
+        // Expecting AuraHandledException from the controller
+        didThrow = e instanceof AuraHandledException;
+    }
+    Test.stopTest();
+
+    System.assert(didThrow, 'Expected AuraHandledException to be thrown for invalid Customer ID');
+}
+
 }
